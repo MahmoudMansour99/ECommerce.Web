@@ -16,6 +16,7 @@ namespace ECommerce.Services.Specifications
             AddInclude(P => P.ProductType);
             AddInclude(P => P.ProductBrand);
         }
+
         public ProductWithTypeAndBrandSpecification(ProductQueryParams queryParams)
             : base(ProductSpecificationHelper.GetProductCriteria(queryParams))
         {
