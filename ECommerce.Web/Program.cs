@@ -1,12 +1,19 @@
-
+using ECommerce.Domain.Contracts;
+using ECommerce.Persistence.Data.DataSeed;
 using ECommerce.Persistence.Data.DbContexts;
+using ECommerce.Persistence.Repositories;
+using ECommerce.Services;
+using ECommerce.Services.MappingProfiles;
+using ECommerce.Services_Abstractions;
+using ECommerce.Web.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace ECommerce.Web
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -22,9 +29,21 @@ namespace ECommerce.Web
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
+            builder.Services.AddScoped<IDataIntializer, DataIntializer>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            //builder.Services.AddAutoMapper(X => X.AddProfile<ProductProfile>());
+            builder.Services.AddAutoMapper(typeof(ServiceAssemplyReference).Assembly);
+            //builder.Services.AddAutoMapper(X => X.LicenseKey = "", typeof(ProductProfile).Assembly);
+            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddTransient<ProductPictureUrlResolver>();
             #endregion
 
             var app = builder.Build();
+
+            #region DataSeed - Apply Migrations
+            await app.MigrateDatabaseAsync();
+            await app.SeedDatabaseAsync();
+            #endregion
 
             #region Configure the HTTP request pipeline
             // Configure the HTTP request pipeline.
@@ -36,13 +55,15 @@ namespace ECommerce.Web
 
             app.UseHttpsRedirection();
 
+            app.UseStaticFiles();
+
             app.UseAuthorization();
 
 
             app.MapControllers(); 
             #endregion
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
