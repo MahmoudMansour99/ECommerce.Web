@@ -22,7 +22,7 @@ namespace ECommerce.Persistence.Repositories
         public async Task<CustomerBasket?> CreateOrUpdateBasketAsync(CustomerBasket basket, TimeSpan TimeToLive = default)
         {
             var JsonBasket = JsonSerializer.Serialize(basket);
-            var IsCreatedOrUpdated = await  _database.StringSetAsync(basket.Id, JsonBasket, 
+            var IsCreatedOrUpdated = await _database.StringSetAsync(basket.Id, JsonBasket, 
                                        (TimeToLive == default) ? TimeSpan.FromDays(7) : TimeToLive);
             if (!IsCreatedOrUpdated)
             {
