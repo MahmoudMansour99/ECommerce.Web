@@ -1,6 +1,9 @@
 using ECommerce.Domain.Contracts;
+using ECommerce.Domain.Entities.IdentityModule;
 using ECommerce.Persistence.Data.DataSeed;
 using ECommerce.Persistence.Data.DbContexts;
+using ECommerce.Persistence.IdentityData.DataSeed;
+using ECommerce.Persistence.IdentityData.DbContexts;
 using ECommerce.Persistence.Repositories;
 using ECommerce.Services;
 using ECommerce.Services.MappingProfiles;
@@ -8,6 +11,7 @@ using ECommerce.Services_Abstractions;
 using ECommerce.Web.CusomMiddleWares;
 using ECommerce.Web.Extensions;
 using ECommerce.Web.Factories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
@@ -33,7 +37,8 @@ namespace ECommerce.Web
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
-            builder.Services.AddScoped<IDataIntializer, DataIntializer>();
+            builder.Services.AddKeyedScoped<IDataIntializer, DataIntializer>("default");
+            builder.Services.AddKeyedScoped<IDataIntializer, IdentityDataIntializer>("Identity");
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             //builder.Services.AddAutoMapper(X => X.AddProfile<ProductProfile>());
             builder.Services.AddAutoMapper(typeof(ServiceAssemplyReference).Assembly);
@@ -52,13 +57,24 @@ namespace ECommerce.Web
             {
                 options.InvalidModelStateResponseFactory = ApiResponseFactory.GenerateApiValidationResponse;
             });
+            builder.Services.AddDbContext<StoreIdentityDbContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
+            });
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            //builder.Services.AddIdentity<ApplicationUser, IdentityRole>();
+            builder.Services.AddIdentityCore<ApplicationUser>()
+                            .AddRoles<IdentityRole>()
+                            .AddEntityFrameworkStores<StoreIdentityDbContext>();
             #endregion
 
             var app = builder.Build();
 
             #region DataSeed - Apply Migrations
             await app.MigrateDatabaseAsync();
+            await app.MigrateIdentityDatabaseAsync();
             await app.SeedDatabaseAsync();
+            await app.SeedIdentityDatabaseAsync();
             #endregion
 
             #region Configure the HTTP request pipeline

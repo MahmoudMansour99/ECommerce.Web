@@ -13,9 +13,7 @@ using System.Threading.Tasks;
 
 namespace ECommerce.Presentation.Controllers
 {
-    [ApiController]
-    [Route("api/[Controller]")]
-    public class ProductsController : ControllerBase
+    public class ProductsController : ApiBaseController
     {
         private readonly IProductService _productService;
 
@@ -37,8 +35,8 @@ namespace ECommerce.Presentation.Controllers
         {
             //throw new Exception();
             var Product = await _productService.getProductByIdAsync(id);
-            
-            return Ok(Product);
+            return HandleResult<ProductDTO>(Product);
+
         }
 
         [HttpGet("brands")]
